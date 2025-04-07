@@ -2,28 +2,35 @@ import os
 import argparse
 import shutil
 import subprocess
+from lib2to3.fixes.fix_asserts import NAMES
+
 from ImageSelector import ImageSelector
 
 def extract_frames(input_vid, output_path):
-    if not args.yes:
-        answer = input(f"About to extract all frames from '{input_vid}' into '{output_path}' (even with --pretend!). This folder will persist unless manually removed. Continue? [y/N]: ").lower()
+    try:
+        if not args.yes:
+            answer = input(f"About to extract all frames from '{input_vid}' into '{output_path}' (even with --pretend!). This folder will persist unless manually removed. Continue? [y/N]: ").lower()
         if answer not in ["y", "yes"]:
             print("Aborting.")
             exit()
+    except NameError:
+        print("Args not defined. Calling from different Py file.")
     if not os.path.exists(output_path):
         os.makedirs(output_path)
     cmd = [
         'ffmpeg',
         '-i', input_vid,
         '-vsync', 'vfr',
-        '-v', 'quiet',
+         '-v', 'quiet',
         '-stats',
         '-q:v', '1',  # Use highest quality for JPEG
         os.path.join(output_path, 'frame%05d.jpg')
     ]
+    # print(cmd)
     subprocess.run(cmd)
 
-def main(input_path, output_path, img_exts, target_count, groups=None, scalar=None):
+
+def main(input_path, output_path, img_exts, target_count,target_percentage, groups=None, scalar=None):
     # Check if input_path is a folder or video
     if os.path.isdir(input_path):
         images = [os.path.join(input_path, img) for img in os.listdir(input_path) if img.lower().endswith(img_exts)]
@@ -42,24 +49,27 @@ def main(input_path, output_path, img_exts, target_count, groups=None, scalar=No
         return
 
     if target_count is None:
-        target_count = int(total_images * (args.target_percentage / 100))
+        target_count = int(total_images * (target_percentage / 100))
 
     selector = ImageSelector(images)
     selected_images = selector.filter_sharpest_images(target_count, groups, scalar)
-
-    if args.pretend:
-        print(f"Would have retained {len(selected_images)} sharpest images. (--pretend)")
-        if not os.path.isdir(input_path):
-            print(f"Warning: Folder '{output_path}' persists, with all extracted frames in it.")
-        return
-
-    if not args.yes:
-        if not os.path.isdir(input_path):
-            print(f"Folder '{output_path}' will persist, with all extracted frames in it. Responding 'y' will prune it down to the desired output, but responding 'n' will keep it as-is, with all extracted frames.")
-        answer = input(f"About to delete all but {len(selected_images)} sharpest images. Continue? [y/N]: ").lower()
-        if answer not in ["y", "yes"]:
-            print("Aborting.")
+    try:
+        if args.pretend:
+            print(f"Would have retained {len(selected_images)} sharpest images. (--pretend)")
+            if not os.path.isdir(input_path):
+                print(f"Warning: Folder '{output_path}' persists, with all extracted frames in it.")
             return
+
+        if not args.yes:
+            if not os.path.isdir(input_path):
+                print(f"Folder '{output_path}' will persist, with all extracted frames in it. Responding 'y' will prune it down to the desired output, but responding 'n' will keep it as-is, with all extracted frames.")
+            answer = input(f"About to delete all but {len(selected_images)} sharpest images. Continue? [y/N]: ").lower()
+            if answer not in ["y", "yes"]:
+                print("Aborting.")
+                return
+
+    except NameError:
+        pass
 
     if not os.path.exists(output_path):
         os.makedirs(output_path)
@@ -102,4 +112,4 @@ if __name__ == '__main__':
 
     img_exts = supported_extensions = tuple('.' + ext.lower() for ext in args.exts.split(','))
 
-    main(args.input_path, args.output_path, img_exts, args.target_count, args.groups, args.scalar)
+    main(args.input_path, args.output_path, img_exts, args.target_count,args.target_percentage, args.groups, args.scalar)

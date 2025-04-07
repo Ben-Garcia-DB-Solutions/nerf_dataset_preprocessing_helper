@@ -4,7 +4,7 @@ from os import listdir
 from filter_raw_data import main as filter_raw
 
 
-videos_dir = r"C:\Users\Ben.Garcia\OneDrive - d&b solutions\Desktop\Projects\Scanning Stick\4-4-24 Lobby Scan"
+videos_dir = r"C:\Users\Ben.Garcia\OneDrive - d&b solutions\Desktop\Projects\Scanning Stick\4-4-24 Car Park Scan"
 videos = listdir(videos_dir)
 sharp_frames_dir = os.path.join(videos_dir,"Sharp Frames")
 if not os.path.exists(sharp_frames_dir):

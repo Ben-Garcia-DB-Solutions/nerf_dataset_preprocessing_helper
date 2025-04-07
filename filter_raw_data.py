@@ -6,7 +6,7 @@ from lib2to3.fixes.fix_asserts import NAMES
 
 from ImageSelector import ImageSelector
 
-def extract_frames(input_vid, output_path):
+def extract_frames(input_vid, output_path,rename):
     try:
         if not args.yes:
             answer = input(f"About to extract all frames from '{input_vid}' into '{output_path}' (even with --pretend!). This folder will persist unless manually removed. Continue? [y/N]: ").lower()
@@ -17,6 +17,15 @@ def extract_frames(input_vid, output_path):
         print("Args not defined. Calling from different Py file.")
     if not os.path.exists(output_path):
         os.makedirs(output_path)
+
+    if rename:
+        # Prefixes the video file name to the frames
+        video_file = os.path.basename(output_path)
+        output_path = os.path.join(output_path, f'{video_file}-frame%05d.jpg')
+    else:
+        output_path = os.path.join(output_path, 'frame%05d.jpg')
+
+
     cmd = [
         'ffmpeg',
         '-i', input_vid,
@@ -24,19 +33,19 @@ def extract_frames(input_vid, output_path):
          '-v', 'quiet',
         '-stats',
         '-q:v', '1',  # Use highest quality for JPEG
-        os.path.join(output_path, 'frame%05d.jpg')
+        os.path.join(output_path)
     ]
-    # print(cmd)
+    print(cmd)
     subprocess.run(cmd)
 
 
-def main(input_path, output_path, img_exts, target_count,target_percentage, groups=None, scalar=None):
+def main(input_path, output_path, img_exts, target_count,target_percentage, groups=None, scalar=None,rename=False):
     # Check if input_path is a folder or video
     if os.path.isdir(input_path):
         images = [os.path.join(input_path, img) for img in os.listdir(input_path) if img.lower().endswith(img_exts)]
         images.sort()
     else:
-        extract_frames(input_path, output_path)
+        extract_frames(input_path, output_path,rename)
         images = [os.path.join(output_path, img) for img in os.listdir(output_path) if img.endswith('.jpg')]
         images.sort()
 

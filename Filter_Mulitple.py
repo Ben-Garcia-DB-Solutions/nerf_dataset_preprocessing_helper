@@ -19,8 +19,8 @@ for file in videos:
     print(file)
 
     video_path = os.path.join(videos_dir,file)
-    frames_path = os.path.join(sharp_frames_dir,file[:-3]) # We make a dir in the sharp frames folder for each video.
+    frames_path = os.path.join(sharp_frames_dir,file[:-4]) # We make a dir in the sharp frames folder for each video.
 
     img_exts = supported_extensions = tuple('.' + ext.lower() for ext in 'jpg,jpeg,png'.split(','))
-    filter_raw(video_path,frames_path,img_exts,target_count=None,target_percentage=10,scalar=1)
+    filter_raw(video_path,frames_path,img_exts,target_count=None,target_percentage=95,rename=True)
     print("\n"*3)

@@ -1,16 +1,34 @@
+from cgitb import reset
+
 import cv2
 from tqdm import tqdm
 from graphlib import draw_graph
+import concurrent.futures
 
 
 class ImageSelector:
     def __init__(self, images):
         self.images = images
         self.image_fm = self._compute_sharpness_values()
+        # TODO: Impliment a way to save the above image_fm & then re-load it so we don't have to calculate all image sharpnesses multiple times.
 
     def _compute_sharpness_values(self):
         print("Calculating image sharpness...")
-        return [(self.variance_of_laplacian(cv2.cvtColor(cv2.imread(img), cv2.COLOR_BGR2GRAY)), img) for img in tqdm(self.images)]
+
+        def Sharpness_Calc(image):
+            r = (self.variance_of_laplacian(cv2.cvtColor(cv2.imread(image), cv2.COLOR_BGR2GRAY)), image)
+            return r
+
+        Images_Iterrable = self.images
+
+        # Using ThreadPoolExecutor to calculate squares concurrently
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            results = list(tqdm(executor.map(Sharpness_Calc, Images_Iterrable), total=len(Images_Iterrable)))
+
+        # Results are returned in the order of input
+        # print(list(results))
+
+        return results
 
     @staticmethod
     def variance_of_laplacian(image):

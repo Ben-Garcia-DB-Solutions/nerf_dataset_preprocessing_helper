@@ -4,13 +4,44 @@ import cv2
 from tqdm import tqdm
 from graphlib import draw_graph
 import concurrent.futures
+import os
+import pickle
 
 
 class ImageSelector:
     def __init__(self, images):
         self.images = images
-        self.image_fm = self._compute_sharpness_values()
-        # TODO: Impliment a way to save the above image_fm & then re-load it so we don't have to calculate all image sharpnesses multiple times.
+
+        quality_values_path = os.path.split(self.images[0])[0]
+        quality_values_file_name = "Image_Qualities.pkl"
+        self.quality_values_path = os.path.join(quality_values_path, quality_values_file_name)
+
+        if os.path.exists(self.quality_values_path):
+            # If we've previously computed the quality values, load them from the file.
+            self.image_fm = self.read_quality_values()
+            print("Loaded image quality values from file.")
+        else:
+            # If we haven't computed the quality values, then do that.
+            self.image_fm = self._compute_sharpness_values()
+            self.save_quality_values()
+
+    def save_quality_values(self):
+        with open(self.quality_values_path, 'wb') as f:
+            pickle.dump(self.image_fm, f)
+
+    def read_quality_values(self):
+        with open(self.quality_values_path, 'rb') as f:
+            data = pickle.load(f)
+        # We probably removed some images last time, but this pickle file has all images quality values. We need remove the images we no longer use from this array.
+        # print(data[0])
+        new_data = []
+        for img in data:
+            if img[1] in self.images:
+                new_data.append(img)
+
+
+
+        return new_data
 
     def _compute_sharpness_values(self):
         print("Calculating image sharpness...")
